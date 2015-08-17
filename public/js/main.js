@@ -90,7 +90,7 @@
         };
 
         // Poll server for updates
-        setInterval($scope.getMessage, 5000);
+        //setInterval($scope.getMessage, 5000);
 
     });
 })();

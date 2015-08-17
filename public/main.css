@@ -4,27 +4,46 @@
 
 .bubble
 {
+    float: right;
     position: relative;
-    width: 500px;
-    height: 120px;
-    padding: 0px;
-    background: #FFFFFF;
-    -webkit-border-radius: 10px;
-    -moz-border-radius: 10px;
-    border-radius: 10px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    /*width: 100px;*/
+    max-width: 96%;
+    text-align: right;
+    padding: 5px;
+    /*line-height: 100px;*/
+    background-color: #fff;
+    border: 2px solid #666;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    display: inline-block;
+    clear: both;
+    /*-webkit-box-shadow: 2px 2px 4px #888;*/
+    /*-moz-box-shadow: 2px 2px 4px #888;*/
+    /*box-shadow: 2px 2px 4px #888;*/
 }
 
-.bubble:after
-{
-    content: '';
-    position: absolute;
-    border-style: solid;
-    border-width: 22px 0 22px 25px;
-    border-color: transparent #FFFFFF;
-    display: block;
-    width: 0;
-    z-index: 1;
-    margin-top: -22px;
-    right: -25px;
-    top: 67%;
-}
+/*p.bubble:before*/
+/*{*/
+    /*content: ' ';*/
+    /*position: absolute;*/
+    /*width: 0;*/
+    /*height: 0;*/
+    /*left: 30px;*/
+    /*top: 100px;*/
+    /*border: 25px solid;*/
+    /*border-color: #666 transparent transparent #666;*/
+/*}*/
+/*p.bubble:after*/
+/*{*/
+    /*content: ' ';*/
+    /*position: absolute;*/
+    /*width: 0;*/
+    /*height: 0;*/
+    /*left: 38px;*/
+    /*top: 100px;*/
+    /*border: 15px solid;*/
+    /*border-color: #fff transparent transparent #fff;*/
+/*}*/

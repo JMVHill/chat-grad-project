@@ -17,11 +17,11 @@
 
 <section ng-show="loggedIn">
 
-    <nav class="navbar navbar-default">
+    <nav class="navbar navbar-default navbar-inverse">
         <div class="container-fluid">
             <div class="navbar-header">
                 <a class="navbar-brand">
-                    <span>Chat - {{user.name}}</span>
+                    <span style="color: whitesmoke">Chat - {{user.name}}</span>
                 </a>
             </div>
         </div>
@@ -47,9 +47,14 @@
             <div ng-show="currentConversation">
                 <h2>{{currentConversation.partner.name || currentConversation.partner.id}}</h2>
 
-                <div ng-show="currentConversation" ng-repeat="message in currentConversation.messages" class="bubble">
-                    {{message.body}}
+                <div style="display: block; margin-left: 10px; margin-right: 10px;">
+                    <div ng-show="currentConversation" ng-repeat="message in currentConversation.messages"
+                         class="bubble">
+                        {{message.body}}
+                    </div>
                 </div>
+
+                <div style="clear: both; margin-bottom: 20px;"></div>
 
                 <!--<textarea ng-bind="conversationString" rows="15" class="col-sm-12 col-md-12 col-lg-12"-->
                 <!--style="resize: none;"></textarea>-->
