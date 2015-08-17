@@ -3,11 +3,26 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-jscs");
     grunt.loadNpmTasks("grunt-mocha-test");
     grunt.loadNpmTasks("grunt-mocha-istanbul");
+    grunt.loadNpmTasks("grunt-execute");
+    grunt.loadNpmTasks("grunt-nodemon");
 
     var files = ["Gruntfile.js", "server.js", "server/**/*.js", "test/**/*.js", "public/**/*.js"];
     var artifactsLocation = "build_artifacts";
 
     grunt.initConfig({
+        execute: {
+            serve: {
+                src: ["server.js"]
+            }
+        },
+        nodemon: {
+            serverStart: {
+                script: "server.js",
+                options: {
+                    watch: ["server"]
+                }
+            }
+        },
         jshint: {
             all: files,
             options: {
@@ -73,4 +88,5 @@ module.exports = function(grunt) {
     grunt.registerTask("test", ["check", "mochaTest", "mocha_istanbul", "istanbul_report",
         "istanbul_check_coverage"]);
     grunt.registerTask("default", "test");
+    grunt.registerTask("serve", "execute:serve");
 };
