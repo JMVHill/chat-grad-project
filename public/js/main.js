@@ -1,7 +1,9 @@
 (function() {
-    var app = angular.module("ChatApp", []);
+    var app = angular.module("ChatApp", ["pubnub.angular.service"]);
 
-    app.controller("ChatController", function($scope, $http) {
+    //$pubnub = angular.module('PubNubAngularApp', ["pubnub.angular.service"]);
+
+    app.controller("ChatController", function($scope, $http, PubNub) {
         $scope.loggedIn = false;
 
         $http.get("/api/user").then(function(userResult) {
