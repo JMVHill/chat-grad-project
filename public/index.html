@@ -3,65 +3,56 @@
 <head>
     <meta charset="utf-8">
     <title>Chat</title>
-    <link rel="stylesheet" href="main.css">
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.1/angular.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="main.css">
     <script src="js/main.js"></script>
 </head>
 <body ng-controller="ChatController">
 
 <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
 
-<section ng-show="loggedIn">
-
-    <nav class="navbar navbar-default navbar-inverse">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <a class="navbar-brand">
-                    <span style="color: whitesmoke">Chat - {{user.name}}</span>
-                </a>
-            </div>
+<section ng-show="loggedIn" style="height: 90%;">
+    <nav class="navbar navbar-default navbar-inverse navbar-custom" style="margin-bottom: 3px;">
+        <div class="navbar-header" style="text-align: center; float: none; margin-top: 7px;">
+            <span style="color: whitesmoke; font-size: 150%;">Chat [{{user.name}}]</span>
         </div>
     </nav>
+    <div style="display: flex; flex-direction: row; align-content: flex-start; height:98%;">
+        <div id="user-list">
+            <!--class="col-sm-4 col-sm-offset-1 col-md-4 col-md-offset-1 col-lg-4 col-md-offset-1"-->
 
-    <div class="row">
-
-        <div id="user-list" class="col-sm-4 col-sm-offset-1 col-md-4 col-md-offset-1 col-lg-4 col-md-offset-1">
-
-            <h2>User Listing</h2> <br/>
-            <ul class="list-group" style="overflow-y: auto;">
+            <!--<h2>User Listing</h2> <br/>-->
+            <ul class="list-group" style="background-color: whitesmoke; height: 100%;">
                 <li class="list-group-item chat-target-user-list" ng-repeat="user in users"
                     ng-click="setChatTarget(user)" ng-show="user.name || user.id" style="clear: both;">
                     {{user.name || user.id}}
                     <!--<button ng-click="setChatTarget(user)" style="float: right;">Chat!</button>-->
-                    <!--<span class="badge">0</span>-->
+                    <span ng-show="userHasUnread(user)" class="badge">{{userUnreadCount(user)}}</span>
                 </li>
             </ul>
+
         </div>
-
-        <div id="chat-area" class="col-sm-5 col-sm-offset-1 col-md-5 col-md-offset-1 col-lg-5 col-md-offset-1">
-
-            <div ng-show="currentConversation">
-                <h2>{{currentConversation.partner.name || currentConversation.partner.id}}</h2>
-
-                <div style="display: block; margin-left: 10px; margin-right: 10px;">
-                    <div ng-show="currentConversation" ng-repeat="message in currentConversation.messages"
-                         class="bubble">
-                        {{message.body}}
-                    </div>
+        <div id="chat-area">
+            <div class="clearfix" id="chat-text-area">
+                <div ng-show="currentConversation" ng-repeat="message in currentConversation.messages"
+                     class="bubble"
+                     ng-class="{true:'bubble-right', false:'bubble-left'}[message.from == userId]">
+                    {{message.body}}
                 </div>
-
-                <div style="clear: both; margin-bottom: 20px;"></div>
-
-                <!--<textarea ng-bind="conversationString" rows="15" class="col-sm-12 col-md-12 col-lg-12"-->
-                <!--style="resize: none;"></textarea>-->
-
-                <input ng-model="newMessage.body" type="text" class="col-sm-9 col-md-9 col-lg-9"> </input>
-                <button ng-click="sendMessage()" class="col-sm-3 col-md-3 col-lg-3">Send</button>
-
+            </div>
+            <div class="clearfix"
+                 style="align-self: flex-end; flex-grow:0; display: flex; flex-direction: row; width: 100%;">
+                <form ng-submit="sendMessage()" class="clearfix"
+                      style="align-self: flex-end; flex-grow:0; display: flex; flex-direction: row; width: 100%;">
+                    <input ng-model="newMessage.body" type="text" style="flex-grow: 1; margin-right: 5px;"> </input>
+                    <button type="submit" style="align-self: flex-end; flex-grow:0; margin-right: 5px;">
+                        Send
+                    </button>
+                </form>
             </div>
 
         </div>

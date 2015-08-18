@@ -11,7 +11,8 @@ module.exports = function (port, db, githubAuthoriser) {
 
     var users = db.collection("users");//-jhill");
     //var users = db.collection("users-rmcneill");
-    var conversations = db.collection("conversations-jhill01");
+    //var conversations = db.collection("conversations-jhill01");
+    var conversations = db.collection("conversations-wpferg");
     var sessions = {};
 
     app.get("/oauth", function (req, res) {
@@ -99,9 +100,15 @@ module.exports = function (port, db, githubAuthoriser) {
         // Declare functions
         var usersFound = function () {
             if ((from) && (to)) {
-                var message = { between: [from._id, to._id], body: req.body.body, time: req.body.time};
+                var message = {
+                    between: [from._id, to._id],
+                    body: req.body.body,
+                    sent: req.body.time,
+                    seen: false
+                };
                 console.log(message);
                 conversations.insert(message);
+                console.log(message);
                 res.sendStatus(200);
             }
         };
@@ -133,13 +140,19 @@ module.exports = function (port, db, githubAuthoriser) {
     app.get("/api/conversations/:to", function (req, res) {
         conversations.find({between: req.params.to}).toArray(function (err, docs) {
             if (!err) {
-                res.json(docs.map(function(conversation) {
-                    console.log(conversation);
-                    return {
-                        from: conversation.between[0],
-                        to: conversation.between[1],
-                        time: conversation.time,
-                        body: conversation.body
+                res.json(docs.map(function (conversation) {
+                    //console.log(conversation);
+                    if (conversation.between) {
+                        return {
+                            _id: conversation._id,
+                            from: conversation.between[0],
+                            to: conversation.between[1],
+                            time: conversation.sent,
+                            body: conversation.body,
+                            seen: conversation.seen
+                        }
+                    } else {
+                        return {};
                     }
                 }));
             } else {
