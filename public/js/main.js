@@ -118,7 +118,11 @@
                         break;
                     }
                 }
+                var origConversation = $scope.currentConversation;
                 $scope.currentConversation = conversation;
+                if (!origConversation || origConversation.id !== $scope.currentConversation.id) {
+                    $scope.markMessageSeen(chatPartner);
+                }
             }
         };
 
@@ -140,6 +144,24 @@
                 }
             }
             return 0;
+        };
+
+        // Mark user messages as seen
+        $scope.markMessageSeen = function(user) {
+            for (var index = 0; index < $scope.conversations.length; index++) {
+                if ($scope.conversations[index].participant == user.id) {
+                    for (var messageIndex = 0; messageIndex < $scope.conversations[index].messages.length; messageIndex ++) {
+                        if (!$scope.conversations[index].messages[messageIndex].seen) {
+                            $http.put("/api/conversations/read/" +
+                                $scope.conversations[index].messages[messageIndex]._id, {}).then(function(response) {
+
+                            }, function(error) {
+                                console.log(error);
+                            })
+                        }
+                    }
+                }
+            }
         };
 
         // Poll server for updates

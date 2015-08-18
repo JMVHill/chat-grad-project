@@ -104,7 +104,7 @@ module.exports = function (port, db, githubAuthoriser) {
                     between: [from._id, to._id],
                     body: req.body.body,
                     sent: req.body.time,
-                    seen: false
+                    seen: [false]
                 };
                 console.log(message);
                 conversations.insert(message);
@@ -155,6 +155,19 @@ module.exports = function (port, db, githubAuthoriser) {
                         return {};
                     }
                 }));
+            } else {
+                res.sendStatus(500);
+            }
+        });
+    });
+
+    app.put("/api/conversations/read/:id", function (req, res) {
+        conversations.findOne({
+            _id: id
+        }, function (err, conversation) {
+            if (!err) {
+                conversation.seen = true;
+                res.json(conversation);
             } else {
                 res.sendStatus(500);
             }
