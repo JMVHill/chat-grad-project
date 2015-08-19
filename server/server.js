@@ -100,15 +100,18 @@ module.exports = function (port, db, githubAuthoriser) {
         // Declare functions
         var usersFound = function () {
             if ((from) && (to)) {
+                var groupId = null;
+                if (req.body.groupId) {
+                    groupId = req.body.groupId;
+                }
                 var message = {
                     between: [from._id, to._id],
                     body: req.body.body,
                     sent: req.body.time,
-                    seen: [false]
+                    seen: [false],
+                    groupId: groupId
                 };
-                console.log(message);
                 conversations.insert(message);
-                console.log(message);
                 res.sendStatus(200);
             }
         };
@@ -141,15 +144,21 @@ module.exports = function (port, db, githubAuthoriser) {
         conversations.find({between: req.params.to}).toArray(function (err, docs) {
             if (!err) {
                 res.json(docs.map(function (conversation) {
-                    //console.log(conversation);
                     if (conversation.between) {
+                        var seenArray = [];
+                        if (conversation.seen instanceof Array) {
+                            seenArray = [conversation.seen];
+                        } else {
+                            seenArray = conversation.seen;
+                        }
                         return {
                             _id: conversation._id,
                             from: conversation.between[0],
-                            to: conversation.between[1],
+                            to: conversation.between.slice(1),
                             time: conversation.sent,
                             body: conversation.body,
-                            seen: conversation.seen
+                            seen: seenArray,
+                            groupId: conversation.groupId
                         }
                     } else {
                         return {};
@@ -163,10 +172,14 @@ module.exports = function (port, db, githubAuthoriser) {
 
     app.put("/api/conversations/read/:id", function (req, res) {
         conversations.findOne({
-            _id: id
+            _id: req.body._id
         }, function (err, conversation) {
             if (!err) {
-                conversation.seen = true;
+                for (var index = 0; index < conversation.between.length; index ++) {
+                    if (conversation.between[index] == req.session.user._id) {
+                        conversation.seen[index-1] = true;
+                    }
+                }
                 res.json(conversation);
             } else {
                 res.sendStatus(500);
