@@ -8,10 +8,13 @@
         $scope.userId = null;
         $scope.chatTarget = null;
         $scope.loggedIn = false;
-        $scope.newMessage = {from: null, to: null, time: null, body: ""};
+        $scope.newMessage = {from: null, to: null, sent: null, body: ""};
         $scope.conversations = [];
         $scope.currentConversation = null;
         $scope.conversationString = "";
+        $scope.newChatUserSearch = "";
+        $scope.newChat = {active: false, hoverUser: null};
+
 
         // Get information for all users in DB
         $scope.performLogin = function () {
@@ -30,8 +33,86 @@
             });
         };
 
+        // Mouse over item hover event for selecting user for group
+        $scope.newChatUserMouseOver = function (user, index) {
+            if (user) {
+                $scope.newChat.hover.user = user;
+                $scope.newChat.hover.index = index;
+            }
+        };
+
+        // Create new group button click
+        $scope.newChatButtonClick = function () {
+            $scope.newChat = {
+                title: "",
+                users: [],
+                body: "",
+                active: true,
+                hover: {index: -1, object: null}
+            };
+            $scope.chatTarget = null;
+        };
+
+        // Compare hover users as it doesnt properly work in angular (who knows why?)
+        $scope.compareHoverUser = function (user) {
+            //console.log(user);
+            //console.log($scope.newChat.hoverUser);
+            return (user.id == $scope.newChat.hover.user.id);
+        };
+
+        // Method to perform navigation in user selection
+        $scope.navigateNewChatUserSelect = function (event) {
+            //console.log(event);
+        };
+
+        // Select a user from filtered users list for new chat
+        $scope.selectHoverUser = function () {
+            if ($scope.newChat.users.indexOf($scope.newChat.hover.user) == -1) {
+                $scope.newChat.users.push($scope.newChat.hover.user);
+                $scope.newChat.hover.user = null;
+                $scope.newChat.hover.index = -1;
+                $scope.newChatUserSearch = "";
+            }
+        };
+
+        // Perform filtering for user selection in newChat UI
+        $scope.filterUserListForNewChat = function(user) {
+            var result = false;
+            console.log(user);
+            if (user) {
+                var searchString = user.name;
+                if (!searchString) { searchString = user.id; }
+                if (searchString) {
+                    result = (searchString.toLowerCase().indexOf($scope.newChatUserSearch.toLowerCase()) !== -1);
+                }
+                if (result) {
+                    for (var index = 0; index < $scope.newChat.users.length; index ++) {
+                        if ($scope.newChat.users[index] == user) {
+                            result = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            return result;
+        };
+
+        // Focus on the filter edit for creating a new chat
+        $scope.focusNewChatFilterSearch = function() {
+            document.getElementById("new-chat-filter-edit").focus();
+        };
+
+        // Delete a selected hover user from new users
+        $scope.deleteHoverUser = function(user) {
+            var foundIndex = $scope.newChat.users.indexOf(user);
+            if (foundIndex !== -1) {
+                $scope.newChat.users.splice(foundIndex, 1);
+            }
+        };
+
         // Set the current chat target
         $scope.setChatTarget = function (chatTarget) {
+            $scope.newChat = {active: false};
             $scope.chatTarget = chatTarget;
             $scope.updateChatBox(chatTarget);
         };
@@ -40,7 +121,7 @@
         $scope.sendMessage = function () {
             if ($scope.newMessage !== "") {
                 var newDate = new Date();
-                $scope.newMessage.time = newDate.getTime();
+                $scope.newMessage.sent = newDate.getTime();
                 $http.post("/api/conversations/" + $scope.chatTarget.id, $scope.newMessage).then(function (response) {
                     $scope.getMessage();
                     $scope.newMessage = '';
@@ -53,7 +134,7 @@
         // Get messages targeting the user
         $scope.getMessage = function () {
             if ($scope.user) {
-                $http.get("/api/conversations/" + $scope.user._id).then(function (response) {
+                $http.get("/api/conversations/").then(function (response) {
 
                     // Define variables
                     var messages = response.data;
@@ -67,7 +148,6 @@
                         thisMessage = messages[messageIndex];
 
                         // Get group identifier or otherParticipant
-                        thisMessage.unread = !thisMessage.unread;
                         otherParticipant = thisMessage.from;
                         var groupId = thisMessage.groupId;
                         if (thisMessage.from === $scope.user._id) {
@@ -100,7 +180,11 @@
                     for (var chatIndex = 0; chatIndex < messageBuilder.length; chatIndex++) {
                         messageBuilder[chatIndex].unread =
                             messageBuilder[chatIndex].messages.filter(function (message) {
-                                return (message.unread && message.from !== $scope.user._id);
+                                var userIndex = message.to.indexOf($scope.user._id);
+                                if (userIndex > -1 && message.seen.length > userIndex) {
+                                    return !message.seen[userIndex];
+                                }
+                                return false;
                             }).length;
                     }
 
@@ -121,17 +205,14 @@
         // Update conversation box -- must modify to take into account groups
         $scope.updateChatBox = function (chatPartner) {
             if ((chatPartner) && ($scope.conversations)) {
-                var conversation = null;
                 for (var index = 0; index < $scope.conversations.length; index++) {
                     if ($scope.conversations[index].participant == chatPartner.id) {
-                        conversation = $scope.conversations[index];
+                        $scope.currentConversation = $scope.conversations[index];
+                        if ($scope.userHasUnread(chatPartner)) {
+                            $scope.markChatMessagesSeen($scope.currentConversation);
+                        }
                         break;
                     }
-                }
-                var origConversation = $scope.currentConversation;
-                $scope.currentConversation = conversation;
-                if (!origConversation || ($scope.currentConversation && origConversation.id !== $scope.currentConversation.id)) {
-                    //$scope.markMessageSent(chatPartner);
                 }
             }
         };
@@ -156,26 +237,14 @@
             return 0;
         };
 
-        //var unreadIndex = $scope.conversations[index].unread.indexOf(user.id);
-        //if (unreadIndex !== -1) {
-        //
-        //}
-
         // Mark user messages as seen
-        $scope.markMessageSent = function (user) {
-            for (var index = 0; index < $scope.conversations.length; index++) {
-                if ($scope.conversations[index].participant == user.id) {
-                    for (var messageIndex = 0; messageIndex < $scope.conversations[index].messages.length; messageIndex++) {
-                        if (!$scope.conversations[index].messages[messageIndex].seen) {
-                            $http.put("/api/conversations/read/" +
-                                $scope.conversations[index].messages[messageIndex]._id, {}).then(function (response) {
-
-                            }, function (error) {
-                                console.log(error);
-                            })
-                        }
-                    }
-                }
+        $scope.markChatMessagesSeen = function (chat) {
+            if (chat) {
+                $http.put("/api/conversations/user/read/" + chat.participant, {}).then(function (response) {
+                    console.log(response);
+                }, function (error) {
+                    console.log(error);
+                });
             }
         };
 
@@ -183,7 +252,24 @@
         $scope.performLogin();
 
         // Poll server for updates
-        setInterval($scope.getMessage, 1000);
+        setInterval($scope.getMessage, 3000);
 
     });
-})();
+
+    app.directive('ngNavigate', function () {
+        return function ($scope, element, attrs) {
+            element.bind("keydown keypress", function (event) {
+                if (event.which === 13 || event.which == 37 || event.which == 38 ||
+                    event.which == 39 || event.which == 40) {
+                    $scope.$apply(function () {
+                        $scope.$eval(attrs.ngNavigate);
+                    });
+
+                    event.preventDefault();
+                }
+            });
+        };
+    });
+
+})
+();

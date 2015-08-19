@@ -15,17 +15,21 @@ body {
     flex-grow: 0;
     align-items: stretch;
     /*align-self: stretch;*/
-    width: 300px;
+    width: 270px;
+    min-width: 270px;
     margin-top: 10px;
     margin-left: 10px;
     margin-bottom: 10px;
     height: 100%;
 }
 
-#chat-area {
+.right-area {
     display: flex;
-    /*flex-grow: 0;*/
-    margin: 30px;
+    flex-grow: 1;
+    margin-top: 10px;
+    margin-left: 30px;
+    margin-right: 30px;
+    margin-bottom: 0px;
     flex-direction: column;
     padding-top: 5px;
     width: 100%;
@@ -52,6 +56,49 @@ body {
 
 .chat-target-user-list {
     cursor: pointer;
+}
+
+.new-chat-user {
+    display: inline-block;
+    margin: 2px;
+    padding: 4px;
+    border-radius: 2px;
+    color: whitesmoke;
+    background-color: #353535;
+}
+
+.filter-user-list {
+    background-color: whitesmoke;
+    width: 100%;
+    flex-grow: 0;
+    margin-bottom: 5px;
+}
+
+.filter-user {
+    cursor: pointer;
+}
+
+.filter-users {
+    background-color: whitesmoke;
+    width: 100%;
+    flex-grow: 0;
+    margin-bottom: 5px;
+    padding: 4px;
+    border-radius: 3px;
+}
+
+.transparent-input {
+    display: inline-block;
+    border: 0px none;
+    background-color: inherit;
+    margin: 5px;
+    width: auto;
+}
+
+.transparent-input:focus {
+    border: 0px none;
+    background-color: inherit;
+    outline-width: 0;
 }
 
 .bubble {

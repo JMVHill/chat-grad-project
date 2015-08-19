@@ -9,10 +9,11 @@ module.exports = function (port, db, githubAuthoriser) {
     app.use(cookieParser());
     app.use(bodyParser.json());
 
-    var users = db.collection("users");//-jhill");
     //var users = db.collection("users-rmcneill");
     //var conversations = db.collection("conversations-jhill01");
-    var conversations = db.collection("conversations-wpferg");
+    var users = db.collection("users");//-jhill");
+    var groups = db.collection("groups-wpferg");
+    var conversations = db.collection("conversations-wpferg2");
     var sessions = {};
 
     app.get("/oauth", function (req, res) {
@@ -91,6 +92,31 @@ module.exports = function (port, db, githubAuthoriser) {
         });
     });
 
+    app.get("/api/conversations/", function (req, res) {
+        conversations.find({between: req.session.user}).sort({sent: 1}).toArray(function (err, docs) {
+            if (!err) {
+                //console.log(docs);
+                res.json(docs.map(function (conversation) {
+                    if (conversation.between) {
+                        return {
+                            _id: conversation._id,
+                            from: conversation.between[0],
+                            to: conversation.between.slice(1),
+                            sent: conversation.sent,
+                            body: conversation.body,
+                            seen: conversation.seen,
+                            groupId: conversation.groupId
+                        }
+                    } else {
+                        return {};
+                    }
+                }));
+            } else {
+                res.sendStatus(500);
+            }
+        });
+    });
+
     app.post("/api/conversations/:to", function (req, res) {
 
         // Reset variables
@@ -107,7 +133,7 @@ module.exports = function (port, db, githubAuthoriser) {
                 var message = {
                     between: [from._id, to._id],
                     body: req.body.body,
-                    sent: req.body.time,
+                    sent: req.body.sent,
                     seen: [false],
                     groupId: groupId
                 };
@@ -117,7 +143,7 @@ module.exports = function (port, db, githubAuthoriser) {
         };
         var findFrom = function (err, user) {
             if (!err) {
-                console.log(user);
+                //console.log(user);
                 from = user;
                 usersFound();
             } else {
@@ -126,7 +152,7 @@ module.exports = function (port, db, githubAuthoriser) {
         };
         var findTo = function (err, user) {
             if (!err) {
-                console.log(user);
+                //console.log(user);
                 to = user;
                 usersFound();
             } else {
@@ -140,51 +166,21 @@ module.exports = function (port, db, githubAuthoriser) {
 
     });
 
-    app.get("/api/conversations/:to", function (req, res) {
-        conversations.find({between: req.params.to}).toArray(function (err, docs) {
+    app.put("/api/conversations/user/read/:userId", function (req, res) {
+        conversations.find().toArray(function (err, docs) {
             if (!err) {
-                res.json(docs.map(function (conversation) {
-                    if (conversation.between) {
-                        var seenArray = [];
-                        if (conversation.seen instanceof Array) {
-                            seenArray = [conversation.seen];
-                        } else {
-                            seenArray = conversation.seen;
-                        }
-                        return {
-                            _id: conversation._id,
-                            from: conversation.between[0],
-                            to: conversation.between.slice(1),
-                            time: conversation.sent,
-                            body: conversation.body,
-                            seen: seenArray,
-                            groupId: conversation.groupId
-                        }
-                    } else {
-                        return {};
+                docs.forEach(function (message) {
+                    var indexOfUser = message.between.indexOf(req.session.user) - 1;
+                    //console.log("[" + message.between + "] : [" + message.seen + "] : [" + indexOfUser + "] : [" + req.session.user + "]");
+                    if (indexOfUser > -1 && message.seen.length > indexOfUser) {
+                        message.seen[indexOfUser] = true;
+                        conversations.update({_id: message._id}, {$set: {seen: message.seen}}, {multi: true});
                     }
-                }));
-            } else {
-                res.sendStatus(500);
+                });
             }
         });
-    });
-
-    app.put("/api/conversations/read/:id", function (req, res) {
-        conversations.findOne({
-            _id: req.body._id
-        }, function (err, conversation) {
-            if (!err) {
-                for (var index = 0; index < conversation.between.length; index ++) {
-                    if (conversation.between[index] == req.session.user._id) {
-                        conversation.seen[index-1] = true;
-                    }
-                }
-                res.json(conversation);
-            } else {
-                res.sendStatus(500);
-            }
-        });
+        res.sendStatus(200);
+        console.log("FINISHED");
     });
 
     return app.listen(port);
