@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Chat</title>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.1/angular.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
@@ -18,7 +19,7 @@
 <section ng-show="loggedIn" style="height: 90%;">
     <nav class="navbar navbar-default navbar-inverse navbar-custom" style="margin-bottom: 3px;">
         <div class="navbar-header" style="text-align: center; float: none; margin-top: 7px;">
-            <span style="color: whitesmoke; font-size: 150%;">Chat [{{user.name}}]</span>
+            <span style="color: whitesmoke; font-size: 150%;">Chat [{{user.name || user._id}}]</span>
         </div>
     </nav>
     <div style="display: flex; flex-direction: row; align-content: flex-start; height:98%;">
@@ -30,7 +31,7 @@
                     ng-click="setChatTarget(user)" ng-show="user.name || user.id" style="clear: both;">
                     <span class="glyphicon glyphicon-user" style="margin-right: 5px;"></span>
                     <span style="text-overflow: ellipsis; width: 250px;">{{user.name || user.id}}</span>
-                    <span ng-show="userHasUnread(user)" class="badge">{{userUnreadCount(user)}}</span>
+                    <span ng-show="userUnreadCount(user) > 0" class="badge">{{userUnreadCount(user)}}</span>
                 </li>
             </ul>
         </div>
@@ -63,8 +64,9 @@
             No chat selected.
         </div>
         <div ng-show="chatTarget && !newChat.active" class="right-area" id="chat-area">
+            <div class="clearfix chat-title"><h2>{{chatTarget.name || chatTarget.id}}</h2></div>
             <div class="clearfix" id="chat-text-area">
-                <div ng-show="currentConversation" ng-repeat="message in currentConversation.messages"
+                <div ng-show="currentChat" ng-repeat="message in currentChat.messages"
                      class="bubble"
                      ng-class="{true:'bubble-right', false:'bubble-left'}[message.from == userId]">
                     {{message.body}}
@@ -72,7 +74,7 @@
             </div>
             <div class="clearfix"
                  style="align-self: flex-end; flex-grow:0; display: flex; flex-direction: row; width: 100%;">
-                <form ng-submit="sendMessage()" class="clearfix"
+                <form ng-submit="clickSendMessage()" class="clearfix"
                       style="align-self: flex-end; flex-grow:0; display: flex; flex-direction: row; width: 100%;">
                     <input ng-model="newMessage.body" type="text" class="form-control"
                            style="flex-grow: 1; margin-right: 5px;">

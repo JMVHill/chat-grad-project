@@ -4,17 +4,65 @@ var cookieParser = require("cookie-parser");
 
 module.exports = function (port, db, githubAuthoriser) {
     var app = express();
+    var http = require('http').Server(app);
+    var io = require('socket.io')(http);
 
     app.use(express.static("public"));
     app.use(cookieParser());
     app.use(bodyParser.json());
 
+    //Collection names saved
     //var users = db.collection("users-rmcneill");
     //var conversations = db.collection("conversations-jhill01");
-    var users = db.collection("users");//-jhill");
-    var groups = db.collection("groups-wpferg");
-    var conversations = db.collection("conversations-wpferg2");
+
+    //Currently active collections
+    var users = db.collection("users");
+    var groups = db.collection("groups-hill");
+    var conversations = db.collection("conversations-hill");
     var sessions = {};
+
+    // Constructors
+    var createSaveMessage = function (params) {
+        var newSaveMessage = {
+            between: [],
+            body: "",
+            groupId: null,
+            sent: null,
+            seen: []
+        };
+        if (params) {
+            if (params.from) {
+                newSaveMessage.between = newSaveMessage.between.concat([params.from]);
+            }
+            if (params.to) {
+                if (params.to instanceof Array) {
+                    newSaveMessage.between = newSaveMessage.between.concat(params.to);
+                    for (var index = 0; index < params.to.length; index ++) {
+                        newSaveMessage.seen.concat(false);
+                    }
+                } else {
+                    newSaveMessage.between = newSaveMessage.between.concat([params.to]);
+                    newSaveMessage.seen = [false];
+                }
+            }
+            if (params.body) {
+                newSaveMessage.body = params.body;
+            }
+            if (params.groupId) {
+                newSaveMessage.groupId = params.groupId;
+            }
+            if (params.sent) {
+                newSaveMessage.sent = params.sent;
+            }
+            if (params.seen) {
+                newSaveMessage.seen = params.seen;
+            }
+        }
+        return newSaveMessage;
+    };
+
+
+    // HTTP calls
 
     app.get("/oauth", function (req, res) {
         githubAuthoriser.authorise(req, function (githubUser, token) {
@@ -80,6 +128,7 @@ module.exports = function (port, db, githubAuthoriser) {
         users.find().toArray(function (err, docs) {
             if (!err) {
                 res.json(docs.map(function (user) {
+                    //console.log(user);
                     return {
                         id: user._id,
                         name: user.name,
@@ -170,18 +219,54 @@ module.exports = function (port, db, githubAuthoriser) {
         conversations.find().toArray(function (err, docs) {
             if (!err) {
                 docs.forEach(function (message) {
-                    var indexOfUser = message.between.indexOf(req.session.user) - 1;
-                    //console.log("[" + message.between + "] : [" + message.seen + "] : [" + indexOfUser + "] : [" + req.session.user + "]");
-                    if (indexOfUser > -1 && message.seen.length > indexOfUser) {
-                        message.seen[indexOfUser] = true;
-                        conversations.update({_id: message._id}, {$set: {seen: message.seen}}, {multi: true});
+                    if (message.between) {
+                        var indexOfUser = message.between.indexOf(req.session.user) - 1;
+                        if (indexOfUser > -1 && message.seen.length > indexOfUser) {
+                            message.seen[indexOfUser] = true;
+                            conversations.update({_id: message._id}, {$set: {seen: message.seen}}, {multi: true});
+                        }
                     }
                 });
             }
         });
         res.sendStatus(200);
-        console.log("FINISHED");
     });
 
-    return app.listen(port);
+
+    // Socket construction
+    io.on('connection', function (socket) {
+
+        // Determine user id
+        var userId = null;
+        if (socket.handshake.query.userId) {
+            userId = socket.handshake.query.userId;
+            console.log(userId + ' connected');
+
+            // Join rooms for groups and self
+            socket.join(userId);
+
+            // Socket events
+            socket.on('disconnect', function () {
+                console.log(userId + ' disconnected');
+            });
+            socket.on('message', function (message) {
+                message.from = userId;
+                io.sockets.in(message.to).emit('message', message);
+                var saveMessage = createSaveMessage(message);
+                console.log(saveMessage);
+                conversations.insertOne(saveMessage);
+            });
+
+        }
+
+    });
+
+    http.listen(port, function () {
+        console.log('listening on *:' + port);
+    });
+
+    // Set server to listen for http requests (keep compatability with WJ chat)
+    //app.listen(port);
+    //return
+
 };
