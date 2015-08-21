@@ -23,22 +23,22 @@
         </div>
     </nav>
     <div style="display: flex; flex-direction: row; align-content: flex-start; height:98%;">
-        <div id="user-list">
+        <div id="conversation-list">
             <button class="btn btn-default" style="margin-bottom: 5px; width: 100%;" ng-click="newChatButtonClick()">New
                 Chat<span class="glyphicon glyphicon-plus" style="float: right;"></span></button>
-            <ul class="list-group" style="background-color: whitesmoke; height: 100%;">
-                <li class="list-group-item chat-target-user-list" ng-repeat="user in users"
-                    ng-click="setChatTarget(user)" ng-show="user.name || user.id" style="clear: both;">
+            <ul class="list-group" style="background-color: whitesmoke;">
+                <li class="list-group-item chat-target-list" ng-repeat="chat in conversations"
+                    ng-click="setChatTarget(chat)" ng-show="chat.users" style="clear: both;">
                     <span class="glyphicon glyphicon-user" style="margin-right: 5px;"></span>
-                    <span style="text-overflow: ellipsis; width: 250px;">{{user.name || user.id}}</span>
-                    <span ng-show="userUnreadCount(user) > 0" class="badge">{{userUnreadCount(user)}}</span>
+                    <span style="text-overflow: ellipsis; width: 250px;">{{getNameForChat(chat)}}</span>
+                    <span ng-show="chat.unread > 0" class="badge">{{chat.unread}}</span>
                 </li>
             </ul>
         </div>
         <div class="clearfix right-area" ng-show="newChat.active">
             <input type="text" class="form-control" style="margin-bottom: 5px;">
 
-            <div class="filter-users" ng-click="focusNewChatFilterSearch()">
+            <div class="new-chat-filter-users" ng-click="focusNewChatFilterSearch()">
                 <div ng-repeat="user in newChat.users" class="new-chat-user">
                     {{user.name || user.id}}
                     <span class="glyphicon glyphicon-remove" ng-click="deleteHoverUser(user)"
@@ -47,26 +47,26 @@
                 <input type="text" id="new-chat-filter-edit" class="transparent-input" ng-model="newChatUserSearch"
                        ng-navigate="navigateNewChatUserSelect()">
             </div>
-            <ul class="list-group filter-user-list" ng-show="newChatUserSearch">
-                <li class="list-group-item filter-user"
+            <ul class="list-group new-chat-filter-user-list" ng-show="newChatUserSearch">
+                <li class="list-group-item new-chat-filter-user"
                     ng-repeat="user in users | filter: filterUserListForNewChat"
                     ng-mouseover="newChatUserMouseOver(user, $index)" ng-click="selectHoverUser()"
                     ng-class="{true: 'list-group-item-info', false: ''}[compareHoverUser(user)]">
                     {{user.name || user.id}}
                 </li>
             </ul>
-            <textarea rows="4" cols="50" style="flex-grow: 1; resize: none;" class="form-control"
+            <textarea rows="4" cols="50" style="flex-grow: 1; resize: none;"
                       ng-model="newChat.body"></textarea>
-            <button class="btn btn-default" style="align-self: flex-end; flex-grow:0; margin-top: 5px;">Send</button>
+            <button class="btn btn-default new-chat-submit" ng-click="newChatMessageSend()">Send</button>
         </div>
         <div ng-show="!chatTarget && !newChat.active"
              style="display: block; width: 100%; height: 100%; text-align: center; vertical-align: middle; line-height: 90px; color: white;">
             No chat selected.
         </div>
         <div ng-show="chatTarget && !newChat.active" class="right-area" id="chat-area">
-            <div class="clearfix chat-title"><h2>{{chatTarget.name || chatTarget.id}}</h2></div>
+            <div class="clearfix chat-title"><h2>{{getNameForChat(chatTarget)}}</h2></div>
             <div class="clearfix" id="chat-text-area">
-                <div ng-show="currentChat" ng-repeat="message in currentChat.messages"
+                <div ng-repeat="message in chatTarget.messages"
                      class="bubble"
                      ng-class="{true:'bubble-right', false:'bubble-left'}[message.from == userId]">
                     {{message.body}}

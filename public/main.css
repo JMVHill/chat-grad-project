@@ -12,7 +12,43 @@ body {
     background-color: #353535;
 }
 
-#user-list {
+.new-chat-submit {
+    align-self: flex-end;
+    flex-grow: 0;
+    margin-top: 5px;
+}
+
+.new-chat-filter-user-list {
+    background-color: whitesmoke;
+    width: 100%;
+    flex-grow: 0;
+    margin-bottom: 5px;
+}
+
+.new-chat-filter-user {
+    cursor: pointer;
+}
+
+.new-chat-filter-users {
+    display: block;
+    background-color: whitesmoke;
+    width: 100%;
+    flex-grow: 0;
+    margin-bottom: 5px;
+    padding: 4px;
+    border-radius: 3px;
+}
+
+.new-chat-user {
+    display: inline-block;
+    margin: 2px;
+    padding: 4px;
+    border-radius: 2px;
+    color: whitesmoke;
+    background-color: #353535;
+}
+
+#conversation-list {
     /*display: inline-flex;*/
     /*display: flex;*/
     flex-grow: 0;
@@ -25,6 +61,12 @@ body {
     margin-bottom: 10px;
     height: 100%;
 }
+
+.chat-target-list {
+    cursor: pointer;
+}
+
+
 
 .right-area {
     display: flex;
@@ -55,39 +97,6 @@ body {
     -webkit-border-radius: 0px;
     -moz-border-radius: 0px;
     border-radius: 0px;
-}
-
-.chat-target-user-list {
-    cursor: pointer;
-}
-
-.new-chat-user {
-    display: inline-block;
-    margin: 2px;
-    padding: 4px;
-    border-radius: 2px;
-    color: whitesmoke;
-    background-color: #353535;
-}
-
-.filter-user-list {
-    background-color: whitesmoke;
-    width: 100%;
-    flex-grow: 0;
-    margin-bottom: 5px;
-}
-
-.filter-user {
-    cursor: pointer;
-}
-
-.filter-users {
-    background-color: whitesmoke;
-    width: 100%;
-    flex-grow: 0;
-    margin-bottom: 5px;
-    padding: 4px;
-    border-radius: 3px;
 }
 
 .chat-title {
