@@ -108,6 +108,18 @@ body {
     width: 100%;
 }
 
+.chat-title-large {
+    font-size: 250%;
+}
+
+.chat-title-medium {
+    font-size: 175%;
+}
+
+.chat-title-small {
+    font-size: 100%;
+}
+
 .transparent-input {
     display: inline-block;
     border: 0px none;

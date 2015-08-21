@@ -53,13 +53,22 @@
                 return newChat;
             };
             $scope.createMessage = function (params) {
-                var newMessage = {from: null, to: [], body: "", sent: null};
+                var newMessage = {
+                    from: null,
+                    to: [],
+                    body: "",
+                    sent: null
+                };
                 if (params) {
                     if (params.from) {
                         newMessage.from = params.from;
                     }
                     if (params.to) {
-                        newMessage.to = params.to;
+                        if (params.to instanceof Array) {
+                            newMessage.to = params.to;
+                        } else {
+                            newMessage.to = [params.to];
+                        }
                     }
                     if (params.body) {
                         newMessage.body = params.body;
@@ -84,16 +93,19 @@
                 return newNewChat;
             };
 
+
             // Socket event methods
             $scope.SOC_GetMessage = function (message) {
 
                 // Determine message type
                 var isGroup = (message.group);
+                var usersArray = [];
 
                 // Search for conversation
                 var conversationFound = false;
                 for (var chatIndex = 0; chatIndex < $scope.conversations.length; chatIndex++) {
-                    if ((!isGroup && $scope.conversations[chatIndex].users == message.from) ||
+                    usersArray = $scope.conversations[chatIndex].users.map(function (user) { return user.id; });
+                    if ((!isGroup && usersArray == message.from) ||
                         (isGroup && $scope.conversations[chatIndex].group == message.group)) {
                         $scope.conversations[chatIndex].messages.push(message);
                         conversationFound = true;
@@ -127,22 +139,27 @@
 
             };
 
-
             // Socket utilisation methods
             $scope.SOC_SendMessage = function (message) {
                 if (message) {
-                    var newDate = new Date();
-                    message.sent = newDate.getTime();
-                    message.to = $scope.chatTarget.id;
-                    $scope.getMessage();
+                    message = $scope.createMessage({
+                        from: $scope.userId,
+                        to: $scope.chatTarget.users.map(function (user) { return user.id; }),
+                        body: message.body,
+                        sent: new Date().getTime()
+                    });
                     $scope.socket.emit('message', message);
-                    $scope.newMessage = $scope.createMessage;
+                    $scope.newMessage = $scope.createMessage();
                 }
             };
             $scope.SOC_MarkAsSeen = function (chat) {
-
+                chat.unread = 0;
+                $http.put("/api/conversations/user/read/" + chat.users, {}).then(function (response) {
+                    //console.log(response);
+                }, function (error) {
+                    console.log(error);
+                });
             };
-
 
             // Data structure utility methods
             $scope.addChatToConversations = function (chat) {
@@ -171,15 +188,37 @@
                 return null;
             };
             $scope.getNameForChat = function (chat) {
-                if (chat.groupName) {
-                    return chat.groupName;
+                if (chat) {
+                    if (chat.groupName) {
+                        return chat.groupName;
+                    }
+                    if (chat.users && chat.users.length == 1 && chat.users[0].name) {
+                        return chat.users[0].name;
+                    }
+                    if (chat.users && chat.users.length == 1 && chat.users[0].id) {
+                        return chat.users[0].id;
+                    }
+                    if (chat.users && chat.users.length > 1) {
+                        var outputString = "";
+                        for (var index = 0; index < chat.users.length; index++) {
+                            if (chat.users[index].name) {
+                                outputString = outputString + chat.users[index].name + ", ";
+                            } else {
+                                outputString = outputString + chat.users[index].id + ", ";
+                            }
+                        }
+                        return outputString.substr(0, outputString.length - 2);
+                    }
                 }
-                if (chat.users && chat.users.length == 1 && chat.users[0].name) {
-                    return chat.users[0].name;
+            };
+            $scope.getTitleSizeGroup = function (titleString) {
+                if (titleString && titleString.length > 60) {
+                    return 'small';
                 }
-                if (chat.users && chat.users.length == 1 && chat.users[0].id) {
-                    return chat.users[0].id;
+                if (titleString && titleString.length > 30) {
+                    return 'medium';
                 }
+                return 'large';
             };
 
             // New chat event methods
@@ -197,7 +236,6 @@
                     //$scope.SOC_SendMessage(message);
                 }
             };
-
             $scope.newChatUserMouseOver = function (user, index) {
                 if (user) {
                     $scope.newChat.hover.user = user;
@@ -227,6 +265,7 @@
                     $scope.newChat.hover.index = -1;
                     $scope.newChatUserSearch = "";
                 }
+                $scope.focusNewChatFilterSearch();
             };
             $scope.filterUserListForNewChat = function (user) {
                 var result = false;
@@ -266,18 +305,11 @@
                 $scope.SOC_SendMessage($scope.newMessage);
             };
 
-
-            //
-            //
-            //
-
-            //
-            //
-
             // Set the current chat target
             $scope.setChatTarget = function (chatTarget) {
                 $scope.newChat = $scope.createNewChat();
                 $scope.chatTarget = chatTarget;
+                $scope.SOC_MarkAsSeen($scope.chatTarget);
                 $scope.updateChatBox(chatTarget);
             };
 
@@ -366,17 +398,6 @@
                     }
                 } else {
                     $scope.chatTarget = null;
-                }
-            };
-
-            // Mark user messages as seen
-            $scope.markChatMessagesSeen = function (chat) {
-                if (chat) {
-                    $http.put("/api/conversations/user/read/" + chat.users, {}).then(function (response) {
-                        //console.log(response);
-                    }, function (error) {
-                        console.log(error);
-                    });
                 }
             };
 

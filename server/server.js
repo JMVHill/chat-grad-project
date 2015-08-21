@@ -17,8 +17,8 @@ module.exports = function (port, db, githubAuthoriser) {
 
     //Currently active collections
     var users = db.collection("users");
-    var groups = db.collection("groups-hill");
-    var conversations = db.collection("conversations-hill");
+    var groups = db.collection("groups-hill-01");
+    var conversations = db.collection("conversations-hill-01");
     var sessions = {};
 
     // Constructors
@@ -146,7 +146,7 @@ module.exports = function (port, db, githubAuthoriser) {
             if (!err) {
                 //console.log(docs);
                 res.json(docs.map(function (conversation) {
-                    if (conversation.between) {
+                    if (conversation.between && conversation.between.length > 0) {
                         return {
                             _id: conversation._id,
                             from: conversation.between[0],
@@ -251,6 +251,7 @@ module.exports = function (port, db, githubAuthoriser) {
             });
             socket.on('message', function (message) {
                 message.from = userId;
+                console.log(message);
                 io.sockets.in(message.to).emit('message', message);
                 var saveMessage = createSaveMessage(message);
                 console.log(saveMessage);

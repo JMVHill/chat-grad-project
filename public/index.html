@@ -64,7 +64,10 @@
             No chat selected.
         </div>
         <div ng-show="chatTarget && !newChat.active" class="right-area" id="chat-area">
-            <div class="clearfix chat-title"><h2>{{getNameForChat(chatTarget)}}</h2></div>
+            <div class="clearfix chat-title"
+                 ng-class="{'large': 'chat-title-large', 'medium': 'chat-title-medium', 'small': 'chat-title-small'}[getTitleSizeGroup(getNameForChat(chatTarget))]">
+                {{getNameForChat(chatTarget)}}
+            </div>
             <div class="clearfix" id="chat-text-area">
                 <div ng-repeat="message in chatTarget.messages"
                      class="bubble"
